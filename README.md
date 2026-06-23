@@ -27,11 +27,6 @@ No installation required.
 1. Download or clone this repository
 2. Open `index.html` in any modern browser (Chrome, Firefox, Edge, Safari)
 
-```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
-open index.html
-```
 
 > **Note:** Keep `index.html`, `style.css`, and `script.js` in the same folder — the page will not work if they're separated.
 
