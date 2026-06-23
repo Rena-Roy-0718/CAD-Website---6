@@ -53,8 +53,8 @@ No installation required.
 |---|---|---|
 | ![Blank](Screenshots/Blank%20page.png) | ![Sample 1](Screenshots/Sample%201.png) | ![Sample 2](Screenshots/Sample%202.png) |
 
-| Sample 3 | Sample 4 | Sample 5
-|---|---|
+| Sample 3 | Sample 4 | Sample 5 |
+|---|---|---|
 | ![Sample 3](Screenshots/Sample%203.png) | ![Sample 4](Screenshots/Sample%204.png) | ![Sample 5](Screenshots/Sample%205.png)
 
 ## Project Structure
