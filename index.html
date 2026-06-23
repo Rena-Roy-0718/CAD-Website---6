@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAD Tool v6</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div id="topbar">
+  <span class="tlbl">Shape</span>
+  <div id="sbtns" style="display:flex;gap:2px">
+    <button class="sbtn active" data-shape="triangle" title="Triangle">△</button>
+    <button class="sbtn" data-shape="line"     title="Line">╱</button>
+    <button class="sbtn" data-shape="curve"    title="Curve">⌒</button>
+    <button class="sbtn" data-shape="rect"     title="Rectangle">▭</button>
+    <button class="sbtn" data-shape="square"   title="Square">□</button>
+    <button class="sbtn" data-shape="circle"   title="Circle">○</button>
+    <button class="sbtn" data-shape="ellipse"  title="Ellipse">⬭</button>
+    <button class="sbtn" data-shape="pentagon" title="Pentagon">⬠</button>
+    <button class="sbtn" data-shape="hexagon"  title="Hexagon">⬡</button>
+    <button class="sbtn" data-shape="arrow"    title="Arrow">→</button>
+    <button class="sbtn" data-shape="star"     title="Star">★</button>
+  </div>
+
+  <div class="sep"></div>
+  <button class="ubtn" id="btn-undo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+  <button class="ubtn" id="btn-redo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+
+  <div class="sep"></div>
+  <!-- ── Snap controls (new) ── -->
+  <span class="tlbl">Snap</span>
+  <button class="ubtn" id="btn-snap" onclick="toggleSnap()" title="Toggle snap to grid">🧲 Snap: On</button>
+
+  <div class="sep"></div>
+  <span class="tlbl">System</span>
+  <div class="ugw">
+    <button class="ugb active" onclick="setGroup('metric',this)">Metric</button>
+    <button class="ugb"        onclick="setGroup('imperial',this)">Imperial</button>
+    <button class="ugb"        onclick="setGroup('pixel',this)">Pixels</button>
+  </div>
+  <span class="tlbl" style="margin-left:5px">Unit</span>
+  <select id="usel" onchange="A.unit=this.value;drawRulers();redraw()">
+    <option value="mm">mm</option>
+    <option value="cm" selected>cm</option>
+    <option value="m">m</option>
+  </select>
+  <div class="sep"></div>
+  <span class="tlbl">Scale 1:</span>
+  <select id="dsel" onchange="A.dscale=+this.value;drawRulers();redraw()">
+    <option value="1">1</option><option value="5">5</option><option value="10">10</option>
+    <option value="20">20</option><option value="50" selected>50</option>
+    <option value="100">100</option><option value="200">200</option><option value="500">500</option>
+  </select>
+  <div class="sep"></div>
+  <span class="tlbl">Sheet</span>
+  <select id="shsel" onchange="initSheet(this.value)">
+    <option value="A4">A4</option><option value="A3" selected>A3</option>
+    <option value="A2">A2</option><option value="A1">A1</option><option value="A0">A0</option>
+  </select>
+  <div class="sep mla"></div>
+  <span class="tlbl">Zoom</span>
+  <button class="zbtn" onclick="doZoom(-1)">−</button>
+  <span id="zlbl">100%</span>
+  <button class="zbtn" onclick="doZoom(+1)">+</button>
+  <button class="zbtn" style="width:auto;padding:0 7px;font-size:11px" onclick="zoomFit()">Fit</button>
+</div>
+
+<!-- ── Body ── -->
+<div id="body">
+
+  <!-- Left sidebar -->
+  <div id="sidebar">
+
+    <!-- Layers -->
+    <div class="pnl" id="layers-panel">
+      <div class="pt">Layers</div>
+      <div id="layer-list"></div>
+      <button id="add-layer-btn" onclick="addLayer()">+ Add layer</button>
+    </div>
+
+    <!-- Fill -->
+    <div class="pnl">
+      <div class="pt">Fill</div>
+      <div class="seg" id="fseg">
+        <button class="active" data-v="filled"  onclick="setFill('filled',this)">Filled</button>
+        <button               data-v="hollow" onclick="setFill('hollow',this)">Hollow</button>
+      </div>
+    </div>
+
+    <!-- Colour -->
+    <div class="pnl">
+      <div class="pt">Colour</div>
+      <div class="cg" id="cgrid"></div>
+      <div class="rw" style="margin-top:8px">
+        <label style="font-size:12px;color:#555">Custom</label>
+        <input type="color" id="cc" value="#1558a8">
+      </div>
+    </div>
+
+    <!-- Stroke -->
+    <div class="pnl">
+      <div class="pt">Stroke</div>
+      <div class="rw"><label>Width</label><input type="range" id="skr" min="1" max="16" value="2"><span class="v" id="skv">2</span></div>
+    </div>
+
+    <!-- Grid & Snap (new) -->
+    <div class="pnl">
+      <div class="pt">Grid &amp; Snap</div>
+      <div class="rw">
+        <label style="min-width:60px">Grid</label>
+        <select id="gridvis" onchange="A.gridVisible=this.value==='on';redraw()">
+          <option value="on" selected>Visible</option>
+          <option value="off">Hidden</option>
+        </select>
+      </div>
+      <div class="rw">
+        <label style="min-width:60px">Snap to</label>
+        <select id="snapdiv" onchange="A.snapDivisions=+this.value">
+          <option value="1">Major lines</option>
+          <option value="2">1/2 grid</option>
+          <option value="5" selected>1/5 grid</option>
+          <option value="10">1/10 grid</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Cursor / coordinates (enhanced) -->
+    <div class="pnl">
+      <div class="pt">Coordinates</div>
+      <div class="inf">X: <b id="ix">—</b><br>Y: <b id="iy">—</b><br>W: <b id="iw">—</b><br>H: <b id="ih">—</b></div>
+    </div>
+
+    <!-- Saved -->
+    <div class="pnl" style="flex:1">
+      <div class="pt">Saved</div>
+      <div class="sl" id="slist"><p class="emp">Nothing saved yet.</p></div>
+    </div>
+
+  </div>
+
+  <!-- Canvas area -->
+  <div id="carea">
+    <div id="rrow">
+      <div id="corner"></div>
+      <div id="rh-out"><canvas id="rh" height="24"></canvas></div>
+    </div>
+    <div id="mrow">
+      <div id="rv-out"><canvas id="rv" width="24"></canvas></div>
+      <div id="vp">
+        <div id="sheet-host">
+          <canvas id="sc"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ftb">
+  <button onclick="saveShape()">💾 Save</button>
+  <button onclick="clearAll()">Clear</button>
+  <button class="danger" onclick="deleteSel()">🗑 Delete</button>
+</div>
+<!-- Live coordinate readout that follows the cursor (new) -->
+<div id="coord-badge"></div>
+<div id="status">Pick a shape and layer, then click-and-drag to draw</div>
+
+<script src="script.js"></script>
+</body>
+</html>
